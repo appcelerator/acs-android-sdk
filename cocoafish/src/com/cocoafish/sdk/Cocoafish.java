@@ -1,25 +1,31 @@
 package com.cocoafish.sdk;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
-
-import com.facebook.android.DialogError;
-import com.facebook.android.Facebook;
-import com.facebook.android.FacebookError;
-import com.facebook.android.Facebook.DialogListener;
+import org.apache.http.message.BasicNameValuePair;
 
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+
+import com.facebook.android.DialogError;
+import com.facebook.android.Facebook;
+import com.facebook.android.Facebook.DialogListener;
+import com.facebook.android.FacebookError;
 
 public class Cocoafish {
 
@@ -27,39 +33,96 @@ public class Cocoafish {
 	private static CookieStore cookieStore = new BasicCookieStore();
 
 	private String appId;
+	private String oauthConsumerKey;
+	private String oauthConsumerSecret;
+
+	private CCRestfulRequest request;
 	private CCUser currentUser;
-	private static Cocoafish defaultInstance = null;
 	private Context curApplicationContext;
 	private Facebook authenticatedFacebook = null; 
 	private DialogListener customFacebookLoginListener = null; 
 	
-	public static void initialize(String appId, String facebookAppId, Context context) {
-	    if (defaultInstance == null) {
-	    	defaultInstance = new Cocoafish(appId, facebookAppId, context);
-	    	defaultInstance.loadLoginInfo();
-	    }
-	}
 	
-	public static Cocoafish getDefaultInstance() throws CocoafishError {
-		if (defaultInstance == null) {
-			throw new CocoafishError("Cocoafish is not initialized");
-		}
-		return defaultInstance;
-	}
 	
 	// private constructor
-	private Cocoafish(String appId, String facebookAppId, Context context) {
+	public Cocoafish(String appId, String facebookAppId, Context context) {
 		this.appId = appId;
 		this.curApplicationContext = context;
+		request = new CCRestfulRequest(this);
+		
 		if (facebookAppId != null) {
 			authenticatedFacebook = new Facebook(facebookAppId);
 		}
 	}
 	
+	// private constructor
+	public Cocoafish(String consumerKey, String consumerSecret, String facebookAppId, Context context) {
+		this.oauthConsumerKey = consumerKey;
+		this.oauthConsumerSecret = consumerSecret;
+		this.curApplicationContext = context;
+		request = new CCRestfulRequest(this);
+		
+		if (facebookAppId != null) {
+			authenticatedFacebook = new Facebook(facebookAppId);
+		}
+	}
+	/**
+	 * 
+	 * @param actionUrl The last fragment of request url
+	 * @param requestMethod It only can be one of CCRequestMthod.GET, CCRequestMthod.POST, CCRequestMthod.PUT, CCRequestMthod.DELETE.  
+	 * @param dataMap The name-value pairs which is ready to be sent to server, 
+	 * 			the value only can be String type or java.io.File type 
+	 * @param useSecure Decide whether use http or https protocol.
+	 * @return
+	 * @throws IOException If there is network problem, the method will throw this type of exception.
+	 * @throws CocoafishError If other problems cause the request cannot be fulfilled, the CocoafishError will be threw.
+	 */
+	public CCResponse sendRequest(String actionUrl, CCRequestMethod requestMethod, 
+			   Map<String, Object> dataMap, boolean useSecure) throws IOException, CocoafishError{
+		CCResponse response = null;
+		
+		List<NameValuePair> nameValuePairs = null;	// store all request parameters
+		Map<String, File> nameFileMap = null;		// store the requested file and its parameter name
+		
+		if( dataMap != null && !dataMap.isEmpty() )
+		{
+			Iterator it = dataMap.keySet().iterator();
+			while(it.hasNext()){
+				String name = (String) it.next();
+				
+				Object value = dataMap.get(name);
+				
+				if( value instanceof String){
+					if( nameValuePairs == null )
+						nameValuePairs = new ArrayList<NameValuePair>();
+					nameValuePairs.add(new BasicNameValuePair( name, (String)value ) );
+				} else if (value instanceof File){
+					if( nameFileMap == null)
+						nameFileMap = new HashMap<String, File>();
+					nameFileMap.put( name, (File) value );
+				}
+			}
+		} 
+		if( requestMethod == null || requestMethod.getTypeString() == null )
+			throw new CocoafishError("The request method cannot be null.");
+		
+		String requestType = requestMethod.getTypeString();
+		
+		if( oauthConsumerKey!= null && this.oauthConsumerSecret != null )
+		{
+			response = request.sendRequestByOAuth(actionUrl, requestType, oauthConsumerKey, 
+					oauthConsumerSecret, nameValuePairs, nameFileMap, useSecure);
+		} else {
+			response = request.sendRequestByAppKey(actionUrl, requestType, appId, 
+					nameValuePairs, nameFileMap, useSecure);
+		}
+		return response;
+	}
+	
 	public void facebookAhtorize(Activity activity, String[] permissions,
             final DialogListener customListener) {
 		customFacebookLoginListener = customListener;
-		authenticatedFacebook.authorize(activity, permissions, new FacebookLoginListener());
+		authenticatedFacebook.authorize(activity, permissions, new FacebookLoginListener(this));
 	}
 	
 	public Facebook getFacebook() {
@@ -69,7 +132,15 @@ public class Cocoafish {
 	public String getAppId() {
 		return appId;
 	}
-	
+
+	public String getOauthConsumerKey() {
+		return oauthConsumerKey;
+	}
+
+	public String getOauthConsumerSecret() {
+		return oauthConsumerSecret;
+	}
+
 	public Context getCurApplicationContext() {
 		return curApplicationContext;
 	}
@@ -160,10 +231,15 @@ public class Cocoafish {
 	}
 	
     public class FacebookLoginListener implements DialogListener {
+    	private Cocoafish cocoafish ;
+    	private CCRestfulRequest request ;
+    	public FacebookLoginListener(Cocoafish cocoafish){
+    		this.cocoafish = cocoafish;
+    		request = new CCRestfulRequest(this.cocoafish );
+    	}
 
         public void onComplete(Bundle values) {
         	// login with cocoafish server using facebook access token
-        	CCRestfulRequest request = new CCRestfulRequest();
         	try {
 				request.facebookUserLogin(authenticatedFacebook.getAccessToken(), authenticatedFacebook.getAppId());
 			} catch (IOException e) {
@@ -197,4 +273,28 @@ public class Cocoafish {
 			customFacebookLoginListener = null;
         }
     }
+
+    // This method is just used for test, 
+    // and it will be delete in the final version code.
+	public static void initialize(String appId, String facebookAppId,
+			Context applicationContext) {
+		testFish = new Cocoafish(appId, facebookAppId, applicationContext);
+		
+	}
+
+    // This method is just used for test, 
+    // and it will be delete in the final version code.
+	public static void initialize(String comsuerKey, String comsumerSecret, String facebookAppId,
+			Context applicationContext) {
+		testFish = new Cocoafish(comsuerKey, comsumerSecret, facebookAppId, applicationContext);
+		
+	}
+	
+	// This method is just used for test, 
+    // and it will be delete in the final version code.
+	public static Cocoafish getDefaultInstance() {
+		return testFish;
+	}
+	
+	public static Cocoafish testFish;
 }
