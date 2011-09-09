@@ -32,7 +32,7 @@ public class Cocoafish {
 	private static final String COOKIES_FILE = "CocofishCookiesFile";
 	private static CookieStore cookieStore = new BasicCookieStore();
 
-	private String appId;
+	private String appKey;
 	private String oauthConsumerKey;
 	private String oauthConsumerSecret;
 
@@ -42,11 +42,17 @@ public class Cocoafish {
 	private Facebook authenticatedFacebook = null; 
 	private DialogListener customFacebookLoginListener = null; 
 	
+	public Cocoafish(String appKey) {
+		this(appKey, null, null);
+	}
 	
+	public Cocoafish(String consumerKey, String consumerSecret) {
+		this(consumerKey, consumerSecret, null, null);
+	}
 	
 	// private constructor
-	public Cocoafish(String appId, String facebookAppId, Context context) {
-		this.appId = appId;
+	private Cocoafish(String appKey, String facebookAppId, Context context) {
+		this.appKey = appKey;
 		this.curApplicationContext = context;
 		request = new CCRestfulRequest(this);
 		
@@ -56,7 +62,7 @@ public class Cocoafish {
 	}
 	
 	// private constructor
-	public Cocoafish(String consumerKey, String consumerSecret, String facebookAppId, Context context) {
+	private Cocoafish(String consumerKey, String consumerSecret, String facebookAppId, Context context) {
 		this.oauthConsumerKey = consumerKey;
 		this.oauthConsumerSecret = consumerSecret;
 		this.curApplicationContext = context;
@@ -113,7 +119,7 @@ public class Cocoafish {
 			response = request.sendRequestByOAuth(actionUrl, requestType, oauthConsumerKey, 
 					oauthConsumerSecret, nameValuePairs, nameFileMap, useSecure);
 		} else {
-			response = request.sendRequestByAppKey(actionUrl, requestType, appId, 
+			response = request.sendRequestByAppKey(actionUrl, requestType, appKey, 
 					nameValuePairs, nameFileMap, useSecure);
 		}
 		return response;
@@ -129,8 +135,8 @@ public class Cocoafish {
 		return authenticatedFacebook;
 	}
 	
-	public String getAppId() {
-		return appId;
+	public String getAppKey() {
+		return appKey;
 	}
 
 	public String getOauthConsumerKey() {
