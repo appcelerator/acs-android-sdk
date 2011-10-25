@@ -35,7 +35,7 @@ public class CCPagination {
 		}
 		
 		try {
-			perPage =  Integer.parseInt(jObject.getString("perPage").trim());
+			perPage =  Integer.parseInt(jObject.getString("per_page").trim());
 		} catch (NumberFormatException e) {
 			throw new CocoafishError("Invalid Server Response: CCPagination: perPage is not a number");
 
@@ -44,7 +44,7 @@ public class CCPagination {
 		}
 		
 		try {
-			totalPages = Integer.parseInt(jObject.getString("totalPages").trim());
+			totalPages = Integer.parseInt(jObject.getString("total_pages").trim());
 		} catch (NumberFormatException e) {
 			throw new CocoafishError("Invalid Server Response: CCPagination: totoalPages is not a number");
 		} catch (JSONException e) {
@@ -52,7 +52,7 @@ public class CCPagination {
 		}
 		
 		try {
-			totalResults = Integer.parseInt(jObject.getString("totalResults").trim());
+			totalResults = Integer.parseInt(jObject.getString("total_results").trim());
 		} catch (NumberFormatException e) {
 			throw new CocoafishError("Invalid Server Response: CCPagination: totalResults is not a number");
 		} catch (JSONException e) {
