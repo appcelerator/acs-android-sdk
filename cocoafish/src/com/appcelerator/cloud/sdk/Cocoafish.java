@@ -36,6 +36,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -264,7 +265,7 @@ public class Cocoafish {
 		} else {
 			if (paramsPairs != null && !paramsPairs.isEmpty()) {
 				if (request instanceof HttpEntityEnclosingRequestBase) {
-					((HttpEntityEnclosingRequestBase) request).setEntity(new UrlEncodedFormEntity(paramsPairs));
+					((HttpEntityEnclosingRequestBase) request).setEntity(new UrlEncodedFormEntity(paramsPairs, HTTP.UTF_8));
 				}
 			}
 		}
