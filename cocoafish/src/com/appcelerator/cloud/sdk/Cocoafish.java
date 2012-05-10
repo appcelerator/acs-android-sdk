@@ -243,7 +243,10 @@ public class Cocoafish {
 			// Append the nameValuePairs to request's url string
 			if (paramsPairs != null && !paramsPairs.isEmpty()) {
 				for (NameValuePair pair : paramsPairs) {
-					entity.addPart(URLEncoder.encode(pair.getName()), URLEncoder.encode(pair.getValue()));
+				    // cacaofish doesn't understand encoded string.
+				    // "Custom Photo Sizes" option will be ignored for this encoding. 
+                    //entity.addPart(URLEncoder.encode(pair.getName()), URLEncoder.encode(pair.getValue()));
+					entity.addPart(pair.getName(), pair.getValue());
 				}
 			}
 
@@ -265,7 +268,7 @@ public class Cocoafish {
 		} else {
 			if (paramsPairs != null && !paramsPairs.isEmpty()) {
 				if (request instanceof HttpEntityEnclosingRequestBase) {
-					((HttpEntityEnclosingRequestBase) request).setEntity(new UrlEncodedFormEntity(paramsPairs, HTTP.UTF_8));
+					((HttpEntityEnclosingRequestBase) request).setEntity(new UrlEncodedFormEntity(paramsPairs, CCConstants.ENCODING_UTF8));
 				}
 			}
 		}
