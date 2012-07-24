@@ -1,6 +1,14 @@
 package com.appcelerator.cloud.sdk;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.webkit.CookieSyncManager;
+import android.widget.Toast;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -8,6 +16,8 @@ import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.signature.AuthorizationHeaderSigningStrategy;
 import oauth.signpost.signature.HmacSha1MessageSigner;
+
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -41,6 +51,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.appcelerator.cloud.sdk.oauth2.CocoafishDialog;
+import com.appcelerator.cloud.sdk.oauth2.DialogError;
+import com.appcelerator.cloud.sdk.oauth2.DialogListener;
+import com.appcelerator.cloud.sdk.oauth2.DlgCustomizer;
+import com.appcelerator.cloud.sdk.oauth2.Util;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,6 +67,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.FileNameMap;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -62,33 +79,53 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.zip.GZIPInputStream;
 
 public class Cocoafish {
-	private String hostname = null;
-	private String appKey = null;
-	private OAuthConsumer consumer = null;
 
+    // Strings used in the authorization flow
+	public static final String REDIRECT_URI = "acsconnect://success";
+    public static final String CANCEL_URI = "acsconnect://cancel";
+    public static final String ACCESS_TOKEN = "access_token";
+    public static final String ACCESS_TOKEN_EXPIRES_IN = "expires_in";
+    public static final String ACTION_LOGIN = "oauth";
+    public static final String ACTION_SIGNUP = "signup";
+
+	private String hostname = null;
+    private String authHost = CCConstants.DEFAULT_AUTH_HOST;
+	private String appKey = null;
+	private String oauthKey = null;
+	private OAuthConsumer consumer = null;
+	
 	private HttpClient httpClient = null;
 	private CookieStore cookieStore = null;
 	private Context curApplicationContext = null;
 
-	private CCUser currentUser = null;
+    private String accessToken = null;
+    private String accessExpiresIn = null;
+    private long accessExpires = 0;
+    private DialogListener customDialogListener;
+    private DlgCustomizer dlgCustomizer; 
 
-	public Cocoafish(String appKey) {
-		this(appKey, (Context) null);
+ 	protected CCUser currentUser = null;
+
+ 	private boolean threeLegged = false;
+ 	
+	public Cocoafish(String key) {
+		this(key, (Context) null);
 	}
 
 	public Cocoafish(String consumerKey, String consumerSecret) {
 		this(consumerKey, consumerSecret, (Context) null);
 	}
 
-	public Cocoafish(String appKey, Context context) {
-		this(appKey, context, null);
+	public Cocoafish(String key, Context context) {
+		this(key, context, null);
 	}
 
-	public Cocoafish(String appKey, Context context, String hostname) {
-		this.appKey = appKey;
+	public Cocoafish(String key, Context context, String hostname) {
+		this.appKey = key;
 		curApplicationContext = context;
 		if (hostname != null && hostname.trim().length() > 0)
 			this.hostname = hostname;
@@ -103,6 +140,7 @@ public class Cocoafish {
 	}
 
 	public Cocoafish(String consumerKey, String consumerSecret, Context context, String hostname) {
+		this.oauthKey = consumerKey;
 		consumer = new CommonsHttpOAuthConsumer(consumerKey, consumerSecret);
 		consumer.setMessageSigner(new HmacSha1MessageSigner());
 		consumer.setSigningStrategy(new AuthorizationHeaderSigningStrategy());
@@ -115,6 +153,22 @@ public class Cocoafish {
 		initializeSDK();
 	}
 
+	
+	public void useThreeLegged(boolean threeLegged) {
+		this.threeLegged = threeLegged;
+		//if using 3-legged OAuth the passed in 'key' should be OAuth key
+		//this happens when consumerSecret isn't provided
+		if(threeLegged && this.oauthKey == null) {
+			this.oauthKey = this.appKey;
+			this.appKey = null;
+		}
+	}
+	
+	public boolean isThreeLegged() {
+		return this.threeLegged;
+	}
+	
+	
 	private void initializeSDK() {
 		SchemeRegistry registry = new SchemeRegistry();
 		registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
@@ -192,9 +246,22 @@ public class Cocoafish {
 		}
 		requestUrl.append(url);
 
-		if (appKey != null) {
+		if (appKey != null && consumer == null && !threeLegged) {
 			requestUrl.append(CCConstants.KEY);
 			requestUrl.append(appKey);
+		} 
+		
+		if(this.threeLegged) {
+			if (this.accessToken != null) {
+				if (requestUrl.toString().indexOf("?") > 0) {
+					requestUrl.append("&");
+				} else {
+					requestUrl.append("?");
+				}
+				requestUrl.append(CCConstants.ACCESS_TOKEN);
+				requestUrl.append("=");
+				requestUrl.append(this.accessToken);
+			}
 		}
 
 		if (method == CCRequestMethod.GET || method == CCRequestMethod.DELETE) {
@@ -214,7 +281,7 @@ public class Cocoafish {
 		try {
 			reqUri = new URL(requestUrl.toString()).toURI();
 		} catch (URISyntaxException e1) {
-			throw new CocoafishError("Internal error occured.");
+			throw new CocoafishError("Incorrect API host: " + e1.getLocalizedMessage());
 		}
 
 		HttpUriRequest request = null;
@@ -279,6 +346,32 @@ public class Cocoafish {
 			} catch (OAuthCommunicationException e) {
 				throw new CocoafishError(e.getLocalizedMessage());
 			}
+		} else {
+	    	if(this.threeLegged) {
+	    		OAuthConsumer tmpConsumer = new CommonsHttpOAuthConsumer(this.oauthKey, "12345678901234567890123456789012");
+	    		try {
+					tmpConsumer.sign(request);
+					Header authHeader = request.getFirstHeader("Authorization");
+					StringTokenizer st = new StringTokenizer(authHeader.getValue(), ",");
+					StringBuffer sb = new StringBuffer();
+					boolean first = true;
+					while(st.hasMoreElements()) {
+						String token = st.nextToken();
+						if(token.contains("oauth_signature") || token.contains("oauth_timestamp"))
+							continue;
+						if(first) {
+							first = false;
+						} else {
+							sb.append(",");
+						}
+						sb.append(token);
+					}
+					request.setHeader("Authorization", sb.toString());
+	    		} catch (Exception e) {
+					throw new CocoafishError(e.getLocalizedMessage());
+				} 
+	    	}
+
 		}
 
 		HttpContext localContext = new BasicHttpContext();
@@ -425,6 +518,245 @@ public class Cocoafish {
 		currentUser = null;
 	}
 
+	
+	
+	
+    /**
+     * Default authorize method. Grants only basic permissions.
+     * See authorize() below for @params.
+     * @throws CocoafishError 
+     */
+    public void authorize(Activity activity, String action, final DialogListener listener) throws CocoafishError {
+        authorize(activity, action, new String[] {}, listener, false);
+    }
+    
+    /**
+     * Default authorize method. Grants only basic permissions.
+     * See authorize() below for @params.
+     * @throws CocoafishError 
+     */
+    public void authorize(Activity activity, String action, final DialogListener listener, boolean useSecure) throws CocoafishError {
+        authorize(activity, action, new String[] {}, listener, useSecure);
+    }
+
+    /**
+     * 
+     * @param activity
+     * @param permissions
+     * @param listener
+     * @throws CocoafishError 
+     */
+    public void authorize(Activity activity, String action, String[] permissions, final DialogListener listener, boolean useSecure) throws CocoafishError {
+    	if(!this.threeLegged)
+    		throw new CocoafishError("Cocoafish.authorize should be used with 3-legged OAuth only");
+    	if(this.oauthKey == null)
+    		throw new CocoafishError("OAuth consumer key isn't set.");
+    	customDialogListener = listener;
+        startDialogAuth(activity, action, permissions, useSecure);
+    }
+    
+	private void startDialogAuth(Activity activity, String action, String[] permissions, boolean useSecure) {
+		final String method = "Cocoafish.startDialogAuth";
+		
+        Bundle params = new Bundle();
+        if (permissions.length > 0) {
+            params.putString("scope", TextUtils.join(",", permissions));
+        }
+        
+        CookieSyncManager.createInstance(activity);
+        
+        dialog(activity, action, params, new DialogListener() {
+
+            public void onComplete(Bundle values) {
+                // ensure any cookies set by the dialog are saved
+                CookieSyncManager.getInstance().sync();
+                setAccessToken(values.getString(ACCESS_TOKEN));
+                setAccessExpiresIn(values.getString(ACCESS_TOKEN_EXPIRES_IN));
+                if (isSessionValid()) {
+                    Log.d(method, "Login Success! access_token=" + getAccessToken() + " expires=" + getAccessExpires());
+                    //made a call to get user information to satisfy Cocoafish
+    				try {
+						CCResponse response = sendRequest("users/show/me.json", CCRequestMethod.GET, null, false);
+						updateSessionInfo2(response);
+					} catch (Throwable e) {
+						Log.d(method, "Failed to get user information: " + e.getMessage());
+						customDialogListener.onCocoafishError(new CocoafishError(e.getLocalizedMessage()));
+					} 
+
+                    customDialogListener.onComplete(values);
+                } else {
+                	customDialogListener.onCocoafishError(new CocoafishError("Failed to receive access token."));
+                }
+            }
+
+            public void onError(DialogError error) {
+                Log.d(method, "Dialog onError: " + error);
+                customDialogListener.onError(error);
+            }
+
+            public void onCocoafishError(CocoafishError error) {
+                Log.d(method, "Dialog onCocoafishError: " + error);
+                customDialogListener.onCocoafishError(error);
+            }
+
+            public void onCancel() {
+                Log.d(method, "Dialog onCancel");
+                customDialogListener.onCancel();
+            }
+        }, useSecure);
+    }
+
+	private void updateSessionInfo2(CCResponse response) throws CocoafishError {
+		if (response != null && response.getMeta() != null) {
+			CCMeta meta = response.getMeta();
+			if (meta.getCode() == CCConstants.SUCCESS_CODE) {
+				try {
+					if (response.getResponseData() != null) {
+						JSONArray array = response.getResponseData().getJSONArray(CCConstants.USERS);
+						if (array != null && array.length() > 0) {
+							currentUser = new CCUser(array.getJSONObject(0));
+							saveSessionInfo();
+						}
+					}
+				} catch (JSONException e) {
+					throw new CocoafishError(e.getLocalizedMessage());
+				}
+			}
+		}
+	}
+	
+
+    /**
+     * Invalidate the current user session by removing the access token in memory, clearing the browser cookie, and invalidating 
+     * the access token by sending request to authorization server.
+     *
+     * Note that this method blocks waiting for a network response, so do not call it in a UI thread.
+     *
+     * @param context The Android context in which the logout should be called: it should be the same context in which the login 
+     * 			occurred in order to clear any stored cookies
+     * @throws IOException
+     * @throws MalformedURLException
+     * @return JSON string representation of the oauth/invalidate response ("true" if successful)
+     * @throws CocoafishError 
+     */
+    public String logout(Context context, boolean useSecure) throws CocoafishError  {
+
+    	if(!this.threeLegged)
+    		throw new CocoafishError("Cocoafish.logout should be used with 3-legged OAuth only");
+
+    	StringBuffer endpoint = null;
+		if (useSecure) {
+			endpoint = new StringBuffer(CCConstants.HTTPS_HEAD);
+		} else {
+			endpoint = new StringBuffer(CCConstants.HTTP_HEAD);
+		}
+		endpoint.append(this.authHost);
+		endpoint.append("/oauth/invalidate");
+        Bundle parameters = new Bundle();
+        if (isSessionValid()) {
+            parameters.putString(ACCESS_TOKEN, getAccessToken());
+        } else {
+			Toast.makeText( context, "session invalid: no access token", Toast.LENGTH_SHORT).show();
+			return null;
+        }
+        
+        //String url = endpoint + "?" + Util.encodeUrl(parameters);
+        if (context.checkCallingOrSelfPermission(Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+            Util.showAlert(context, "Error", "Application requires permission to access the Internet");
+            return null;
+        } else {
+            this.clearSessionInfo();
+            setAccessToken(null);
+            setAccessExpires(0);
+            String response;
+			try {
+				response = request(endpoint.toString(), parameters, "GET");
+			} catch (IOException e) {
+				throw new CocoafishError(e.getLocalizedMessage());
+			}
+            return response;
+        } 	
+
+    }
+
+    public String request(String url, Bundle params, String httpMethod) throws MalformedURLException, IOException {
+        return Util.openUrl(url, httpMethod, params);
+    }
+
+    public void dialog(Context context, String action, DialogListener listener, boolean useSecure) {
+        dialog(context, action, new Bundle(), listener, useSecure);
+    }
+
+    /**
+     * Show dialog for authentication
+     * @param context
+     * @param action
+     * @param parameters
+     * @param listener
+     */
+    public void dialog(Context context, String action, Bundle parameters, final DialogListener listener, boolean useSecure) {
+
+    	StringBuffer endpoint = null;
+		if (useSecure) {
+			endpoint = new StringBuffer(CCConstants.HTTPS_HEAD);
+		} else {
+			endpoint = new StringBuffer(CCConstants.HTTP_HEAD);
+		}
+		
+		if(this.authHost == null || this.authHost.length() == 0) {
+			listener.onCocoafishError(new CocoafishError("Authorization Server isn't set."));
+			return;
+		}
+    	endpoint.append(this.authHost);
+        parameters.putString("client_id", this.oauthKey);
+        parameters.putString("redirect_uri", REDIRECT_URI);
+
+        if(ACTION_LOGIN.equals(action)) {
+	    	endpoint.append("/oauth/authorize");
+	        parameters.putString("response_type", "token");
+		} else if(ACTION_SIGNUP.equals(action)) {
+			endpoint.append("/users/sign_up");
+		} else {
+			listener.onCocoafishError(new CocoafishError("Action not supported: " + action));
+			return;
+		}
+
+        if (isSessionValid()) {
+            parameters.putString(ACCESS_TOKEN, getAccessToken());
+        }
+        endpoint.append("?");
+        endpoint.append(Util.encodeUrl(parameters));
+        
+		URI reqUri;
+		try {
+			reqUri = new URL(endpoint.toString()).toURI();
+		} catch (MalformedURLException e1) {
+			listener.onCocoafishError(new CocoafishError("Incorrect Auth Host: " + e1.getLocalizedMessage()));
+			return;
+		} catch (URISyntaxException e2) {
+			listener.onCocoafishError(new CocoafishError("Incorrect Auth Host: " + e2.getLocalizedMessage()));
+			return;
+		}
+        
+        if (context.checkCallingOrSelfPermission(Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+            Util.showAlert(context, "Error", "Application requires permission to access the Internet");
+        } else {
+            new CocoafishDialog(context, endpoint.toString(), listener, this.dlgCustomizer).show();
+        }
+    }
+
+    /**
+     * @return boolean - whether this object has an non-expired session token
+     */
+    public boolean isSessionValid() {
+        return (getAccessToken() != null) &&
+                ((getAccessExpires() == 0) ||
+                        (System.currentTimeMillis() < getAccessExpires()));
+    }
+
+	
+
+    //getters and setters
 	public CCUser getCurrentUser() {
 		return currentUser;
 	}
@@ -436,4 +768,84 @@ public class Cocoafish {
 	public void setHostname(String hostname) {
 		this.hostname = hostname;
 	}
+	
+    public void setAppKey(String appKey) {
+    	this.appKey = appKey;
+    }
+    
+    public String getAppKey() {
+    	return this.appKey;
+    }
+
+    /**
+     * Retrieve the OAuth 2.0 access token for API access: treat with care.
+     * Returns null if no session exists.
+     * @return String - access token
+     */
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    /**
+     * Retrieve the current session's expiration time (in milliseconds since
+     * Unix epoch), or 0 if the session doesn't expire or doesn't exist.
+     * @return long - session expiration time
+     */
+    public long getAccessExpires() {
+        return accessExpires;
+    }
+
+    /**
+     * Set the OAuth 2.0 access token for API access.
+     * @param token - access token
+     */
+    public void setAccessToken(String token) {
+        accessToken = token;
+    }
+
+    /**
+     * Set the current session's expiration time (in milliseconds since Unix
+     * epoch), or 0 if the session doesn't expire.
+     * @param time - timestamp in milliseconds
+     */
+    public void setAccessExpires(long time) {
+        accessExpires = time;
+    }
+
+    /**
+     * Set the current session's duration (in seconds since issued).
+     * @param expiresIn - duration in seconds
+     */
+    public void setAccessExpiresIn(String expiresIn) {
+        if (expiresIn != null && !expiresIn.equals("0")) {
+        	this.accessExpiresIn = expiresIn;
+            setAccessExpires(System.currentTimeMillis() + Integer.parseInt(expiresIn) * 1000);
+        }
+    }
+    
+    /**
+     * Get the current session's duration (in seconds since issued).
+     * @return duration in seconds
+     */
+    public String getAccessExpiresIn() {
+    	return this.accessExpiresIn;
+    }
+
+
+    public String getAuthHost() {
+		return authHost;
+	}
+
+	public void setAuthHost(String authHost) {
+		this.authHost = authHost;
+	}
+
+    public DlgCustomizer getDlgCustomizer() {
+		return dlgCustomizer;
+	}
+
+	public void setDlgCustomizer(DlgCustomizer dlgCustomizer) {
+		this.dlgCustomizer = dlgCustomizer;
+	}
+
 }

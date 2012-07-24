@@ -230,17 +230,20 @@ public class Explore extends MapActivity {
 			List<JSONObject> places = new ArrayList<JSONObject>();
 			CCResponse  result = null;
 			try {
-				result = sdk.sendRequest("places/search.json", CCRequestMethod.GET, null, false);
+				result = sdk.sendRequest("places/query.json", CCRequestMethod.GET, null, false);
+				if(result.getMeta().getCode() != 200) {
+					errorMsg = result.getMeta().getMessage();
+					return null;
+				}
 				JSONObject resJson = result.getResponseData();
 				JSONArray array = resJson.getJSONArray("places");
 				for( int i = 0 ; i < array.length() ; i++ ){
 					places.add( array.getJSONObject(i) );
 				}
 			} catch (CocoafishError e) {
-				errorMsg = e.getLocalizedMessage();
-			} catch (JSONException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
+				errorMsg = "Failed to get places: " + e.getLocalizedMessage();
+			} catch (Exception e) {
+				errorMsg = "Failed to get places: " + e.getMessage();
 				e.printStackTrace();
 			}
 			return places;

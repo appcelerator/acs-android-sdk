@@ -47,6 +47,20 @@
         	android:text="@string/signup"
     	/>
     </LinearLayout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    	android:orientation="horizontal" android:layout_width="fill_parent"
+    	android:layout_height="fill_parent">
+	    <Button android:id="@+id/acsAuth"
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content"
+	    	android:text="Login with ACS"
+	    />
+  	    <Button android:id="@+id/acsSignUp"
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content"
+	    	android:text="Sign Up with ACS"
+	    />
+	</LinearLayout>	    
     <Button android:id="@+id/facebookAuth"
     	android:layout_width="wrap_content"
     	android:layout_height="wrap_content"

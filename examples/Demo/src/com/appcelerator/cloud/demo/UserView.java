@@ -17,11 +17,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.appcelerator.cloud.sdk.CCConstants;
 import com.appcelerator.cloud.sdk.CCMeta;
@@ -30,6 +32,8 @@ import com.appcelerator.cloud.sdk.CCResponse;
 import com.appcelerator.cloud.sdk.CCUser;
 import com.appcelerator.cloud.sdk.Cocoafish;
 import com.appcelerator.cloud.sdk.CocoafishError;
+import com.appcelerator.cloud.sdk.oauth2.DialogError;
+import com.appcelerator.cloud.sdk.oauth2.DialogListener;
 
 public class UserView extends Activity {
 
@@ -50,6 +54,14 @@ public class UserView extends Activity {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+        
+        //Honeycomb and above don't allow networking on main thread, otherwise NetworkOnMainThreadException
+        //will be thrown. Applications targeting earlier SDK versions are allowed to do networking on their 
+        //main event loop threads, but it's heavily discouraged. Networking should be done in AsyncTasks.
+        //This is a temporary fix to make login/logout/signup work. 
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy); 
+        
     }
   
     @Override
@@ -84,8 +96,10 @@ public class UserView extends Activity {
 		} catch (CocoafishError e) {
 			errorMsg = e.getMessage();
     	} catch (IOException e) {
-			e.printStackTrace();
-		} 
+			errorMsg = e.getMessage();
+		} catch (Exception e) {
+			errorMsg = e.getMessage();
+		}
 		dialog.dismiss();
 		
 		if (errorMsg != null) {
@@ -108,8 +122,13 @@ public class UserView extends Activity {
     }
     
     protected void performLogout() {
+    	
 	    try {
-			sdk.sendRequest("users/logout.json", CCRequestMethod.GET, null, false);
+			if (sdk.isThreeLegged() && sdk.getAccessToken() != null) {
+				sdk.logout(UserView.this, false);
+	    	} else {
+	    		sdk.sendRequest("users/logout.json", CCRequestMethod.GET, null, false);
+	    	}
 		} catch (CocoafishError e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -144,6 +163,65 @@ public class UserView extends Activity {
         	public void onClick(View view) {
         		startActivityForResult(new Intent(UserView.this, SignUp.class), LAUNCH_SIGNUP);
 	    }});
+        
+        View acsAuthButton = findViewById(R.id.acsAuth); 
+        acsAuthButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				performAuthorization();
+		}});
+
+        View acsSignUpButton = findViewById(R.id.acsSignUp); 
+        acsSignUpButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				performACSSignUp();
+		}});
+    }
+    
+    
+    protected void performAuthorization() {
+
+    	if( !sdk.isSessionValid() ) {
+			Toast.makeText(UserView.this, "Authorizing", Toast.LENGTH_SHORT).show();
+			try {
+				sdk.authorize(UserView.this, Cocoafish.ACTION_LOGIN, new LoginDialogListener(), false);
+			} catch (CocoafishError e) {
+				Toast.makeText( UserView.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+			}
+		} else {
+			Toast.makeText( UserView.this, "Has valid session", Toast.LENGTH_SHORT).show();
+			
+			CCResponse result = null;
+			String errorMsg = null;
+			
+			try {
+				result = sdk.sendRequest("users/show/me.json", CCRequestMethod.GET, null, false);
+				JSONObject resJson = result.getResponseData();
+				if (resJson != null)
+					Toast.makeText(UserView.this, resJson.toString(), Toast.LENGTH_SHORT).show();
+				else 
+					Toast.makeText(UserView.this, "null response data", Toast.LENGTH_SHORT).show();
+				
+				showUserView();
+				
+			} catch (CocoafishError e) {
+				errorMsg = e.getLocalizedMessage();
+    			Toast.makeText( UserView.this, errorMsg, Toast.LENGTH_SHORT).show();
+			} catch (IOException e) {
+				errorMsg = e.getLocalizedMessage();
+    			Toast.makeText( UserView.this, errorMsg, Toast.LENGTH_SHORT).show();
+			}
+			
+		}
+    }
+    
+    
+    protected void performACSSignUp() {
+		Toast.makeText(UserView.this, "Signing Up", Toast.LENGTH_SHORT).show();
+		try {
+			sdk.authorize(UserView.this, Cocoafish.ACTION_SIGNUP, new LoginDialogListener());
+		} catch (CocoafishError e) {
+			Toast.makeText( UserView.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+		}
     }
     
     protected void showUserView()
@@ -248,6 +326,49 @@ public class UserView extends Activity {
 	}
 
 	
-	
+	//***********************************************************************
+	//***********************************************************************
+	// LoginDialogListener - ypjin
+	//***********************************************************************
+	//***********************************************************************
+	public final class LoginDialogListener implements DialogListener {
+		public void onComplete(Bundle values) {
+			CCResponse result = null;
+			String errorMsg = null;
+			try {
+				//The user has logged in, so now you can query and use their cocoafish info
+				result = sdk.sendRequest("users/show/me.json", CCRequestMethod.GET, null, false);
+				JSONObject resJson = result.getResponseData();
+    			Toast.makeText( UserView.this, resJson.toString(), Toast.LENGTH_SHORT).show();
+//				Toast.makeText( Connect.this, "Thank you for Logging In, " + firstName + " " + lastName + "!", Toast.LENGTH_SHORT).show();
+
+				//save your access token here
+				//sdk.getAccessToken();
+				//sdk.getAccessExpires();
+				
+				showUserView();
+				
+			} catch( CocoafishError error ) {
+				Toast.makeText( UserView.this, error.toString(), Toast.LENGTH_SHORT).show();
+			} catch( Exception error ) {
+				Toast.makeText( UserView.this, error.toString(), Toast.LENGTH_SHORT).show();
+			}
+		}
+		
+		public void onCocoafishError(CocoafishError error) {
+			Toast.makeText( UserView.this, "CocoafishError: " + error.toString(), Toast.LENGTH_LONG).show();
+			//Toast.makeText( Connect.this, "Something went wrong. Please try again.", Toast.LENGTH_LONG).show();
+		}
+		
+		public void onError(DialogError error) {
+			Toast.makeText( UserView.this, "DialogError: " + error.toString(), Toast.LENGTH_LONG).show();
+			//Toast.makeText( Connect.this, "Something went wrong. Please try again.", Toast.LENGTH_LONG).show();
+		}
+		 
+        public void onCancel() {
+			Toast.makeText( UserView.this, "Cancelled!", Toast.LENGTH_LONG).show();
+        	//Toast.makeText( Connect.this, "Something went wrong. Please try again.", Toast.LENGTH_LONG).show();
+		}
+	}
 	
 }
