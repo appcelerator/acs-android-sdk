@@ -687,11 +687,11 @@ public class Cocoafish {
 
     }
 
-    public String request(String url, Bundle params, String httpMethod) throws MalformedURLException, IOException {
+    private String request(String url, Bundle params, String httpMethod) throws MalformedURLException, IOException {
         return Util.openUrl(url, httpMethod, params);
     }
 
-    public void dialog(Context context, String action, DialogListener listener, boolean useSecure) throws CocoafishError {
+    private void dialog(Context context, String action, DialogListener listener, boolean useSecure) throws CocoafishError {
         dialog(context, action, new Bundle(), listener, useSecure);
     }
 
@@ -703,7 +703,7 @@ public class Cocoafish {
      * @param listener
      * @throws CocoafishError 
      */
-    public void dialog(Context context, String action, Bundle parameters, final DialogListener listener, boolean useSecure) throws CocoafishError {
+    private void dialog(Context context, String action, Bundle parameters, final DialogListener listener, boolean useSecure) throws CocoafishError {
 
     	StringBuffer endpoint = null;
 		if (useSecure) {
@@ -753,7 +753,7 @@ public class Cocoafish {
     /**
      * @return boolean - whether this object has an non-expired session token
      */
-    public boolean isSessionValid() {
+    private boolean isSessionValid() {
         return (getAccessToken() != null) &&
                 ((getAccessExpires() == 0) ||
                         (System.currentTimeMillis() < getAccessExpires()));
@@ -783,8 +783,7 @@ public class Cocoafish {
     }
 
     /**
-     * Retrieve the OAuth 2.0 access token for API access: treat with care.
-     * Returns null if no session exists.
+     * Retrieve the OAuth 2.0 access token for API access.
      * @return String - access token
      */
     public String getAccessToken() {
@@ -792,8 +791,7 @@ public class Cocoafish {
     }
 
     /**
-     * Retrieve the current session's expiration time (in milliseconds since
-     * Unix epoch), or 0 if the session doesn't expire or doesn't exist.
+     * Retrieve the current session's expiration time (in milliseconds since Unix epoch).
      * @return long - session expiration time
      */
     public long getAccessExpires() {
@@ -809,11 +807,10 @@ public class Cocoafish {
     }
 
     /**
-     * Set the current session's expiration time (in milliseconds since Unix
-     * epoch), or 0 if the session doesn't expire.
+     * Set the current session's expiration time (in milliseconds since Unix epoch).
      * @param time - timestamp in milliseconds
      */
-    public void setAccessExpires(long time) {
+    private void setAccessExpires(long time) {
         accessExpires = time;
     }
 
@@ -821,7 +818,7 @@ public class Cocoafish {
      * Set the current session's duration (in seconds since issued).
      * @param expiresIn - duration in seconds
      */
-    public void setAccessExpiresIn(int expiresIn) {
+    private void setAccessExpiresIn(int expiresIn) {
         if (expiresIn != 0) {
         	this.accessExpiresIn = expiresIn;
             setAccessExpires(System.currentTimeMillis() + expiresIn * 1000);
