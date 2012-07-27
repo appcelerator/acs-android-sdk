@@ -633,64 +633,6 @@ public class Cocoafish {
 	}
 	
 
-    /**
-     * Invalidate the current user session by removing the access token in memory, clearing the browser cookie, and invalidating 
-     * the access token by sending request to authorization server.
-     *
-     * Note that this method blocks waiting for a network response, so do not call it in a UI thread.
-     *
-     * @param context The Android context in which the logout should be called: it should be the same context in which the login 
-     * 			occurred in order to clear any stored cookies
-     * @throws IOException
-     * @throws MalformedURLException
-     * @return JSON string representation of the oauth/invalidate response ("true" if successful)
-     * @throws CocoafishError 
-     */
-    public String logout(Context context, boolean useSecure) throws CocoafishError  {
-
-    	if(!this.threeLegged)
-    		throw new CocoafishError("Cocoafish.logout should be used with 3-legged OAuth only");
-    	if(context == null)
-    		throw new CocoafishError("Parameter context can not be null.");
-    	
-    	StringBuffer endpoint = null;
-		if (useSecure) {
-			endpoint = new StringBuffer(CCConstants.HTTPS_HEAD);
-		} else {
-			endpoint = new StringBuffer(CCConstants.HTTP_HEAD);
-		}
-		endpoint.append(this.authHost);
-		endpoint.append("/oauth/invalidate");
-        Bundle parameters = new Bundle();
-        if (isSessionValid()) {
-            parameters.putString(ACCESS_TOKEN, getAccessToken());
-        } else {
-			throw new CocoafishError("session invalid: no access token");
-        }
-        
-        //String url = endpoint + "?" + Util.encodeUrl(parameters);
-        if (context.checkCallingOrSelfPermission(Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
-            throw new CocoafishError("Application requires permission to access the Internet");
-        } else {
-            this.clearSessionInfo();
-            setAccessToken(null);
-            setAccessExpires(0);
-            setAccessExpiresIn(0);
-            String response;
-			try {
-				response = request(endpoint.toString(), parameters, "GET");
-			} catch (IOException e) {
-				throw new CocoafishError(e.getLocalizedMessage());
-			}
-            return response;
-        } 	
-
-    }
-
-    private String request(String url, Bundle params, String httpMethod) throws MalformedURLException, IOException {
-        return Util.openUrl(url, httpMethod, params);
-    }
-
     private void dialog(Context context, String action, DialogListener listener, boolean useSecure) throws CocoafishError {
         dialog(context, action, new Bundle(), listener, useSecure);
     }
