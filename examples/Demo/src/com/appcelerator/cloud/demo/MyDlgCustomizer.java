@@ -40,7 +40,7 @@ public class MyDlgCustomizer implements DlgCustomizer {
 	 * @see com.appcelerator.cloud.sdk.oauth2.DlgCustomizer#setUpTitle()
 	 */
 	public TextView setUpTitle(Context context) {
-        Drawable icon = context.getResources().getDrawable(R.drawable.cocoafish_icon);
+        Drawable icon = context.getResources().getDrawable(R.drawable.appcelerator_icon);
         TextView title = new TextView(context);
         title.setText("ACS - To be customized");
         title.setTextColor(Color.WHITE);

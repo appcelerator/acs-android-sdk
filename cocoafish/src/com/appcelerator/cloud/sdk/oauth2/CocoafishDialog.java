@@ -19,7 +19,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.appcelerator.cloud.demo.R;
+import com.appcelerator.cloud.sdk.R;
 import com.appcelerator.cloud.sdk.Cocoafish;
 import com.appcelerator.cloud.sdk.CocoafishError;
 
@@ -90,7 +90,7 @@ public class CocoafishDialog extends Dialog {
 
     
     private TextView setUpTitle() {
-        Drawable icon = getContext().getResources().getDrawable(R.drawable.cocoafish_icon);
+        Drawable icon = getContext().getResources().getDrawable(R.drawable.appcelerator_icon);
         title = new TextView(getContext());
         title.setText("Appcelerator Cloud Service");
         title.setTextColor(Color.WHITE);
