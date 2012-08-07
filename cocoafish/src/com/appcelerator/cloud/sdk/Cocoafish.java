@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.CookieSyncManager;
-import android.widget.Toast;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -176,6 +175,8 @@ public class Cocoafish {
 		sslSocketFactory.setHostnameVerifier(SSLSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
 		registry.register(new Scheme("https", sslSocketFactory, 443));
 		HttpParams parameters = new BasicHttpParams();
+		// 2 mins for timeout. Comment out when needed
+    // HttpConnectionParams.setConnectionTimeout(parameters, 120 * 1000);
 		ClientConnectionManager manager = new ThreadSafeClientConnManager(parameters, registry);
 		httpClient = new DefaultHttpClient(manager, parameters);
 
@@ -331,7 +332,7 @@ public class Cocoafish {
 		} else {
 			if (paramsPairs != null && !paramsPairs.isEmpty()) {
 				if (request instanceof HttpEntityEnclosingRequestBase) {
-					((HttpEntityEnclosingRequestBase) request).setEntity(new UrlEncodedFormEntity(paramsPairs));
+					((HttpEntityEnclosingRequestBase) request).setEntity(new UrlEncodedFormEntity(paramsPairs, "UTF-8"));
 				}
 			}
 		}

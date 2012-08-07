@@ -1,3 +1,6 @@
 cocoafish/bin/*
+cocoafish/gen/*
 examples/Demo/bin/*
+examples/Demo/gen/*
 examples/Push-Demo/bin/*
+examples/Push-Demo/gen/*

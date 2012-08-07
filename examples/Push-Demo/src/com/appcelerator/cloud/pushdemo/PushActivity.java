@@ -31,7 +31,7 @@ public class PushActivity extends Activity {
 		// ((TextView) findViewById(R.id.target_text)).setText(mDeviceID);
 		
 		// Get device token asynchronously
-		CCPushService.getDeviceTokenAsnyc(getBaseContext(), APP_KEY, new DeviceTokenCallback(){
+		CCPushService.getInstance().getDeviceTokenAsnyc(getBaseContext(), APP_KEY, new DeviceTokenCallback(){
 			public void receivedDeviceToken(final String deviceToken) {
 				activityHandler.post(new Runnable(){
 					public void run() {
@@ -47,7 +47,7 @@ public class PushActivity extends Activity {
 
 		// send a keep-alive signal
 		if (CCPushService.getInstance().ifEnabled(getBaseContext())) {
-			CCPushService.getInstance().keepaliveService(getBaseContext());
+			//CCPushService.getInstance().keepaliveService(getBaseContext());
 		}
 
 		final Button startButton = ((Button) findViewById(R.id.start_button));

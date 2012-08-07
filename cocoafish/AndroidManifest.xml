@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.appcelerator.cloud.sdk"
-      android:versionCode="1"
-      android:versionName="1.0">
-    <application/>
+    package="com.appcelerator.cloud.sdk"
+    android:versionCode="2"
+    android:versionName="2.0" >
 
-</manifest> 
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="14" />
+
+    <application />
+
+</manifest>
