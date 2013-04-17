@@ -660,6 +660,7 @@ public class Cocoafish {
 			return;
 		}
     	endpoint.append(this.authHost);
+    	parameters.putString("oauth_consumer_key", this.oauthKey);
         parameters.putString("client_id", this.oauthKey);
         parameters.putString("redirect_uri", REDIRECT_URI);
 
