@@ -6,7 +6,7 @@
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="14" />
+        android:targetSdkVersion="17" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -14,10 +14,17 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <permission android:name="com.appcelerator.cloud.pushdemo.permission.C2D_MESSAGE" 
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.appcelerator.cloud.pushdemo.permission.C2D_MESSAGE" />
+    
     <application
         android:icon="@drawable/icon"
-        android:label="@string/app_name" >
+        android:label="@string/app_name"
+        android:allowBackup="true" >
         <activity
             android:name=".PushActivity"
             android:label="@string/app_name"
@@ -41,9 +48,12 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="com.appcelerator.cloud.push.PushService.MSG_ARRIVAL" />
-
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+                
                 <category android:name="android.intent.category.HOME" />
-            </intent-filter>
+                <category android:name="com.appcelerator.cloud.pushdemo" />
+		</intent-filter>
 
             <meta-data
                 android:name="com.appcelerator.cloud.push.BroadcastReceiver.ArrivalActivity"
@@ -52,18 +62,25 @@
 
         <!--
         <receiver android:name=".CustomReceiver" >
-            <action android:name="com.appcelerator.cloud.push.PushService.MSG_ARRIVAL" />
+            <intent-filter>
+	            <action android:name="com.appcelerator.cloud.push.PushService.MSG_ARRIVAL" />
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+                <category android:name="android.intent.category.HOME" />
+            </intent-filter>
         </receiver>
         
         <receiver android:name=".ExtendedReceiver" >
-            <action android:name="com.appcelerator.cloud.push.PushService.MSG_ARRIVAL" />
+            <intent-filter>
+	            <action android:name="com.appcelerator.cloud.push.PushService.MSG_ARRIVAL" />
+                <category android:name="android.intent.category.HOME" />
+            </intent-filter>
 
             <meta-data
                 android:name="com.appcelerator.cloud.push.BroadcastReceiver.ArrivalActivity"
                 android:value="com.appcelerator.cloud.pushdemo.ArrivalActivity" />
         </receiver>
         -->
-
     </application>
 
 </manifest>

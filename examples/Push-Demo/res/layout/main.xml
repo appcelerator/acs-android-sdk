@@ -34,23 +34,39 @@
          android:textColor="@color/text_color"
      android:layout_marginLeft="10dip" android:layout_marginRight="10dip"/>      
     
-     <Button android:id="@+id/start_button" 
-          android:text="@string/start_service" 
+     <Button android:id="@+id/register_mqtt_button" 
+          android:text="@string/register_mqtt_service" 
+          android:layout_width="wrap_content" 
+          android:layout_height="wrap_content" 
+          android:layout_gravity="center_horizontal"
+          android:layout_marginTop="5dip"    
+          />
+
+     <Button android:id="@+id/start_mqtt_button" 
+          android:text="@string/start_mqtt_service" 
           android:layout_width="wrap_content" 
           android:layout_height="wrap_content" 
           android:layout_gravity="center_horizontal"
           android:layout_marginTop="5dip"    
           /> 
           
-     <Button android:id="@+id/stop_button" 
-          android:text="@string/stop_service" 
+     <Button android:id="@+id/stop_mqtt_button" 
+          android:text="@string/stop_mqtt_service" 
           android:layout_width="wrap_content" 
           android:layout_height="wrap_content" 
           android:layout_gravity="center_horizontal"
           android:layout_marginTop="5dip"    
           />
           
-    <TextView android:id="@+id/aboutlabel_text" 
+     <Button android:id="@+id/register_gcm_button" 
+          android:text="@string/register_gcm_service" 
+          android:layout_width="wrap_content" 
+          android:layout_height="wrap_content" 
+          android:layout_gravity="center_horizontal"
+          android:layout_marginTop="5dip"    
+          />
+          
+     <TextView android:id="@+id/aboutlabel_text" 
 	     android:text = "@string/about"   
 	     android:layout_width="wrap_content" 
 	     android:layout_height="wrap_content" 

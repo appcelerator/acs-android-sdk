@@ -28,7 +28,7 @@ public class PushNotificationsManager{
     	try {
 			CCPushService.getInstance().startService(context);
 		} catch (PushServiceException ex) {
-			Log.e(LOG_TAG, "Push Service occurs an exception.", ex);
+			Log.e(LOG_TAG, "Push Service occurs an exception: " + ex.getMessage());
 		}
 	}
 	
