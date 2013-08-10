@@ -17,7 +17,7 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-    <permission android:name="com.appcelerator.cloud.pushdemo.permission.C2D_MESSAGE" 
+    <permission android:name="com.appcelerator.cloud.pushdemo.permission.C2D_MESSAGE"
         android:protectionLevel="signature" />
     <uses-permission android:name="com.appcelerator.cloud.pushdemo.permission.C2D_MESSAGE" />
     
@@ -31,7 +31,6 @@
             android:theme="@android:style/Theme.Light.NoTitleBar" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -42,24 +41,24 @@
         </activity>
 
         <service android:name="com.appcelerator.cloud.push.PushService" />
-
-        <receiver android:name="com.appcelerator.cloud.push.PushBroadcastReceiver" >
+        
+        <receiver
+            android:name="com.appcelerator.cloud.push.PushBroadcastReceiver"
+            android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="com.appcelerator.cloud.push.PushService.MSG_ARRIVAL" />
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-                
-                <category android:name="android.intent.category.HOME" />
+            	<action android:name="com.google.android.c2dm.intent.RECEIVE" />
+	            <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
                 <category android:name="com.appcelerator.cloud.pushdemo" />
-		</intent-filter>
-
-            <meta-data
+            	<category android:name="android.intent.category.HOME" />
+		    </intent-filter>
+			<meta-data
                 android:name="com.appcelerator.cloud.push.BroadcastReceiver.ArrivalActivity"
                 android:value="com.appcelerator.cloud.pushdemo.ArrivalActivity" />
         </receiver>
-
+        
         <!--
         <receiver android:name=".CustomReceiver" >
             <intent-filter>

@@ -7,7 +7,7 @@
     >
     
     <ImageView android:id="@+id/logo" 
-        android:contentDescription="@string/cocoafish"
+        android:contentDescription="@string/company_label"
           android:src="@drawable/logo"
           android:layout_width="wrap_content" 
           android:layout_height="wrap_content"       
@@ -43,7 +43,7 @@
          android:text="@string/goback_service" />
           
     <TextView android:id="@+id/aboutlabel_text" 
-	     android:text = "@string/about"   
+	     android:text = "@string/about_label"   
 	     android:layout_width="wrap_content" 
 	     android:layout_height="wrap_content" 
          android:layout_gravity="center_horizontal"

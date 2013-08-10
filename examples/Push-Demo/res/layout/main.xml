@@ -1,79 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="@color/background_color"
-    >
-    
-    <ImageView android:id="@+id/logo" 
-        android:contentDescription="@string/cocoafish"
-          android:src="@drawable/logo"
-          android:layout_width="wrap_content" 
-          android:layout_height="wrap_content"       
-          android:layout_gravity="center_horizontal"
-          android:layout_marginTop="5dip"    
-     /> 
-     
-    <TextView android:id="@+id/targetlabel_text" 
-	     android:text = "@string/target"   
-	     android:layout_width="wrap_content" 
-	     android:layout_height="wrap_content" 
-         android:layout_gravity="center_horizontal"
-         android:layout_marginTop="30dip"    
-         android:textColor="@color/text_color"
-     />      
+    android:orientation="vertical" >
 
-    <TextView android:id="@+id/target_text" 
-	     android:layout_width="wrap_content" 
-	     android:layout_height="wrap_content" 
-         android:textAppearance="?android:attr/textAppearanceLarge"
-         android:layout_gravity="center_horizontal"
-         android:layout_marginTop="5dip"    
-         android:textStyle="bold"
-         android:textColor="@color/text_color"
-     android:layout_marginLeft="10dip" android:layout_marginRight="10dip"/>      
-    
-     <Button android:id="@+id/register_mqtt_button" 
-          android:text="@string/register_mqtt_service" 
-          android:layout_width="wrap_content" 
-          android:layout_height="wrap_content" 
-          android:layout_gravity="center_horizontal"
-          android:layout_marginTop="5dip"    
-          />
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dip"
+        android:contentDescription="@string/company_label"
+        android:src="@drawable/logo" />
 
-     <Button android:id="@+id/start_mqtt_button" 
-          android:text="@string/start_mqtt_service" 
-          android:layout_width="wrap_content" 
-          android:layout_height="wrap_content" 
-          android:layout_gravity="center_horizontal"
-          android:layout_marginTop="5dip"    
-          /> 
-          
-     <Button android:id="@+id/stop_mqtt_button" 
-          android:text="@string/stop_mqtt_service" 
-          android:layout_width="wrap_content" 
-          android:layout_height="wrap_content" 
-          android:layout_gravity="center_horizontal"
-          android:layout_marginTop="5dip"    
-          />
-          
-     <Button android:id="@+id/register_gcm_button" 
-          android:text="@string/register_gcm_service" 
-          android:layout_width="wrap_content" 
-          android:layout_height="wrap_content" 
-          android:layout_gravity="center_horizontal"
-          android:layout_marginTop="5dip"    
-          />
-          
-     <TextView android:id="@+id/aboutlabel_text" 
-	     android:text = "@string/about"   
-	     android:layout_width="wrap_content" 
-	     android:layout_height="wrap_content" 
-         android:layout_gravity="center_horizontal"
-         android:layout_marginTop="5dip"    
-         android:textColor="@color/text_color"
-     />      
-           
+    <TextView
+        android:id="@+id/push_type_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dip"
+        android:text="@string/push_type_label"
+        android:textColor="@color/text_color" />
+
+    <TextView
+        android:id="@+id/device_token_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dip"
+        android:text="@string/device_token_label"
+        android:textColor="@color/text_color" />
+
+    <TextView
+        android:id="@+id/device_token_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="10dip"
+        android:layout_marginRight="10dip"
+        android:layout_marginTop="5dip"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/text_color"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/register_mqtt_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dip"
+        android:text="@string/register_mqtt_service" />
+
+    <Button
+        android:id="@+id/start_mqtt_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dip"
+        android:text="@string/start_mqtt_service" />
+
+    <Button
+        android:id="@+id/stop_mqtt_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dip"
+        android:text="@string/stop_mqtt_service" />
+
+    <Button
+        android:id="@+id/register_gcm_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dip"
+        android:text="@string/register_gcm_service" />
+
+    <TextView
+        android:id="@+id/aboutlabel_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dip"
+        android:text="@string/about_label"
+        android:textColor="@color/text_color" />
 
 </LinearLayout>

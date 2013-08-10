@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Cocoafish Push Demo</string>
-    <string name="cocoafish">Cocoafish</string>
-    <string name="target">Device Token:</string>
+    <string name="app_name">Appcelerator Push Demo</string>
+    <string name="company_label">Cocoafish</string>
+    <string name="push_type_label">Push Type</string>
+    <string name="device_token_label">Device Token:</string>
     <string name="register_mqtt_service">Register MQTT Service</string>
     <string name="stop_mqtt_service">Stop Push Service</string>
     <string name="start_mqtt_service">Start Push Service</string>
     <string name="register_gcm_service">Register GCM Service</string>
     <string name="goback_service">Go back to service page</string>
     <string name="notification_message">Notification Message:</string>
-    <string name="about">http://www.cocoafish.com/</string>
+    <string name="about_label">http://www.appcelerator.com/</string>
 
 </resources>
