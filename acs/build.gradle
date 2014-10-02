@@ -1,4 +1,4 @@
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 
 dependencies {
     compile files('lib/signpost-core-1.2.1.1.jar', 'lib/signpost-commonshttp4-1.2.1.1.jar', 'lib/httpmime-4.0.1.jar', 'lib/apache-mime4j-0.6.jar')
@@ -12,10 +12,6 @@ android {
     defaultConfig {
         minSdkVersion 8
         targetSdkVersion 20
-    }
-
-    lintOptions {
-        abortOnError false
     }
 
     sourceSets {
