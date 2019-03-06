@@ -350,7 +350,7 @@ public class CustomReceiver extends BroadcastReceiver {
 
 <p>The ACS Android SDK includes a fully-featured notification receiver that you can use in your
 project, instead of creating your own from scratch. The default notification receiver can take one of the
-following actions when a notififcation arrives:</p>
+following actions when a notification arrives:</p>
 
 <ul>
 	<li>Show a custom alert</li>
@@ -362,7 +362,7 @@ following actions when a notififcation arrives:</p>
 </ul>
 
 <p>Your application can invoke any of these actions simply by setting specifically named fields in
-the notification's JSON payload. First, you must register the default notification recevier in the
+the notification's JSON payload. First, you must register the default notification receiver in the
 <code>&lt;application&gt;</code> section of your project's AndroidManifest.xml file, as shown below.</p>
 
 <pre class="prettyprint">
